@@ -1,13 +1,14 @@
 ---
 - name: 'Installing docker through ansible'
-  hosts: localhost
+  hosts: all
   become: true
+  become_user: ansible
   vars:
-    docker_user: "yousafkhamza"          # your dockerhub username here.
-    docker_password: "**********"        # docker hub password here
-    repo_url: "https://github.com/yousafkhamza/nodejs-dockerfile.git"
-    repo_dest: "/var/repository/"
-    repo: "yousafkhamza/dapp:1"
+    docker_user: "dockerhub username"          # your dockerhub username here.
+    docker_password: "dockerhub password"        # docker hub password here
+    repo_url: "https://github.com/gmk1995/nodejs-dockerfile.git"
+    repo_dest: "/home/ansible/nodejs-docker"
+    repo: "gmk1995/nodejs-docker" # Create a repository in DockerHub and use the DockerHub repository in repo 
   tasks:
 
     - name: "PIP Installation"
@@ -28,27 +29,29 @@
     - name: "Docker Service start and Enable"
       service:
         name: docker
-        state: restarted
+        state: started
         enabled: true
 
     - name: "Build-Step - Cloning Repository"
+      become: true
       git:
         repo: "{{ repo_url }}"
         dest: "{{ repo_dest }}"
       register: repo_status
 
     - name: "Build-Step - Login to remote Repository"
-      when: repo_status.changed == true
+     #when: repo_status.changed == true 
       docker_login:
         username: "{{ docker_user }}"
         password: "{{ docker_password }}"
 
     - name: "Build Docker image from Dockerfile"
+      become: yes
       docker_image:
         build:
           path: "{{ repo_dest }}"
-        name: myimage
-        tag: v1
+        name: nodejs-helloworld # Create your custom image name 
+        tag: alpine # Create your tag name
         repository: "{{ repo }}"
         push: yes
         source: build
